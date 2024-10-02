@@ -1,0 +1,26 @@
+<div class="player-container">
+
+  @if(currentAd){
+  <div class="ad">
+    @if(currentAd.type === 'image'){
+    <img ngSrc="'assets/' + currentAd.url" alt="Anuncio" (error)="onError($event)"/>
+    }@else if(currentAd.type === 'video'){
+    <video [src]="'assets/' + currentAd.url" controls autoplay (ended)="nextAdHandler()">
+    </video>
+    }
+  </div>
+  }@else if (!currentAd) {
+    <p>No hay anuncios disponibles.</p>
+  }
+
+  @if(nextAd) {
+  <div class="ad preload">
+    @if (nextAd.type === 'image') {
+    <img [src]="'assets/' + nextAd.url"  (error)="onError($event)" />
+    }@else if (nextAd.type === 'video') {
+      <video [src]="'assets/' + nextAd.url" (error)="onError($event)"></video>
+    }
+  </div>
+  }
+  <button (click)="nextAdHandler()">Siguiente Anuncio</button>
+</div>
