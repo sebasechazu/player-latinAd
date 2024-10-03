@@ -3,9 +3,9 @@
   @if(currentAd){
   <div class="ad">
     @if(currentAd.type === 'image'){
-    <img ngSrc="'assets/' + currentAd.url" alt="Anuncio" (error)="onError($event)"/>
+    <img [ngSrc]="currentAd.local_url" alt="Anuncio" (error)="onError($event)"/>
     }@else if(currentAd.type === 'video'){
-    <video [src]="'assets/' + currentAd.url" controls autoplay (ended)="nextAdHandler()">
+    <video [src]="currentAd.local_url" controls autoplay (ended)="nextAdHandler()">
     </video>
     }
   </div>
@@ -16,9 +16,9 @@
   @if(nextAd) {
   <div class="ad preload">
     @if (nextAd.type === 'image') {
-    <img [src]="'assets/' + nextAd.url"  (error)="onError($event)" />
+    <img [ngSrc]="nextAd.local_url"  (error)="onError($event)" />
     }@else if (nextAd.type === 'video') {
-      <video [src]="'assets/' + nextAd.url" (error)="onError($event)"></video>
+      <video [src]="nextAd.url" (error)="onError($event)"></video>
     }
   </div>
   }

@@ -4,7 +4,6 @@ const path = require('path');
 const axios = require('axios');
 const fs = require('fs');
 
-// Crear carpetas si no existen
 const createDirectoryIfNotExists = (dirPath) => {
   if (!fs.existsSync(dirPath)) {
     fs.mkdirSync(dirPath, { recursive: true });
@@ -14,36 +13,18 @@ const createDirectoryIfNotExists = (dirPath) => {
   }
 };
 
-// Rutas de las carpetas
 const publicPath = path.join(__dirname, 'public');
 const assetsPath = path.join(publicPath, 'assets');
 const dbPath = path.join(publicPath, 'data');
 
-// Crear las carpetas necesarias
 createDirectoryIfNotExists(assetsPath);
 createDirectoryIfNotExists(dbPath);
 
-// Inicializar la base de datos NeDB
 const db = new Datastore({ filename: path.join(dbPath, 'ads.db'), autoload: true });
 
-function createWindow() {
-  const win = new BrowserWindow({
-    width: 800,
-    height: 600,
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
-      nodeIntegration: true,
-      contextIsolation: false,
-    },
-  });
-
-  win.loadFile(path.join('dist/browser/index.html')); // Cargar el archivo HTML de Angular
-}
-
-// Descargar archivo (imagen o video) y guardarlo en la carpeta assets
 async function downloadFile(item) {
   const { type, url, position } = item;
-  console.log(`Intentando descargar: ${url}`); // Log de URL
+  console.log(`Intentando descargar: ${url}`);
 
   let fileExtension = '';
 
@@ -59,7 +40,7 @@ async function downloadFile(item) {
     return;
   }
 
-  const fileName = `file_${position}_${Date.now()}.${fileExtension}`;
+  const fileName = `file_${position}.${fileExtension}`;
   const filePath = path.join(assetsPath, fileName);
 
   try {
@@ -88,15 +69,14 @@ async function downloadFile(item) {
   }
 }
 
-
-// Función para detectar y actualizar anuncios
 async function fetchAds() {
   try {
-    //const response = await axios.get('https://w9awwdcbhe.api.quickmocker.com/media');
-    const response = await axios.get('https://run.mocky.io/v3/527aaa00-31f8-427b-8032-cafe711c9e56');
+    const response = await axios.get('https://w9awwdcbhe.api.quickmocker.com/media');
+    //const response = await axios.get('https://run.mocky.io/v3/62a4803f-a786-4e36-9e47-93db107f1c2c');
+
     const newAds = response.data;
 
-    console.log(`Anuncios obtenidos: ${JSON.stringify(newAds)}`); // Log de anuncios obtenidos
+    console.log(`Anuncios obtenidos: ${JSON.stringify(newAds)}`); 
 
     for (const [index, ad] of newAds.entries()) {
       ad._id = ad._id || `ad_${index}`;
@@ -113,7 +93,13 @@ async function fetchAds() {
           console.log(`Actualizando anuncio ${ad._id}, cambios detectados.`);
 
           const localFileName = await downloadFile(ad);
-          ad.local_url = path.join('assets', localFileName).replace(/\\/g, '/');
+          const filePath = path.join(__dirname, 'public', 'assets', localFileName);
+
+          if (!fs.existsSync(filePath)) {           
+            ad.local_url = `file://${filePath.replace(/\\/g, '/')}`;
+          } else {           
+            ad.local_url = `file://${filePath.replace(/\\/g, '/')}`;
+          }
 
           await new Promise((resolve, reject) => {
             db.update({ _id: ad._id }, ad, { upsert: true }, (err) => {
@@ -133,27 +119,36 @@ async function fetchAds() {
   }
 }
 
-
-
-// Enviar anuncios a Angular
 ipcMain.on('get-ads', (event) => {
   db.find({}, (err, docs) => {
     if (err) {
       console.error('Error al recuperar anuncios:', err);
-      event.reply('send-ads', []); // Enviar una lista vacía en caso de error
+      event.reply('send-ads', []);
     } else {
-      console.log('Anuncios enviados:', docs); // Verifica que se envíen los anuncios
+      console.log('Anuncios enviados:', docs);
       event.reply('send-ads', docs);
     }
   });
 });
 
+function createWindow() {
+  const win = new BrowserWindow({
+    width: 800,
+    height: 600,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      nodeIntegration: true,
+      contextIsolation: false,
+      webSecurity: false
+    },
+  });
+
+  win.loadFile(path.join('dist/browser/index.html'));
+}
 
 app.whenReady().then(() => {
   createWindow();
-  fetchAds(); // Descargar anuncios al iniciar la app
-
-  // Configurar la actualización automática cada 10 segundos
+  fetchAds();
   setInterval(fetchAds, 10000);
 });
 
