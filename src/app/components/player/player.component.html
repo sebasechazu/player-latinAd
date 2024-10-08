@@ -1,28 +1,50 @@
 <div class="player-container">
-
-  @if(currentAd){
-  <div class="ad">
-    @if(currentAd.type === 'image'){
-      <img [src]="currentAd.local_url" alt="Anuncio" (error)="onError($event)"/>
-    }@else if(currentAd.type === 'video'){
-    <video [src]="currentAd.local_url" controls autoplay (ended)="nextAdHandler()">
-    </video>
-    }
-  </div>
-  }@else if (!currentAd) {
-    <p>No hay anuncios disponibles.</p>
+  
+   <!-- Mostrar mensaje de cargando mientras esperamos los anuncios -->
+   @if (isLoading) {
+    <p >Cargando anuncios...</p>
+   } 
+  
+   @if (!isLoading) {
+    
+    <!-- Mostrar currentAd si está disponible -->
+  @if (currentAd) {
+    <div class="ad">
+      @if (currentAd.type === 'image') {
+        <img 
+        [src]="currentAd.local_url" 
+        alt="Anuncio" 
+        [ngClass]="{'fill-screen': currentAd.fill_screen, 'contain-screen': !currentAd.fill_screen}" 
+        (error)="onError($event)" /> 
+      } @else if (currentAd.type === 'video') {
+        <video 
+        [src]="currentAd.local_url"
+        [ngClass]="{'fill-screen': currentAd.fill_screen, 'contain-screen': !currentAd.fill_screen}" 
+        preload="auto" 
+        controls autoplay
+        (ended)="nextAdHandler()"></video> 
+      }
+    </div>
   }
 
-  @if(nextAd) {
+  <!-- Pre-cargar nextAd pero sin mostrarlo al usuario -->
   <div class="ad preload">
-    @if (nextAd.type === 'image') {
-    <img [ngSrc]="nextAd.local_url"  (error)="onError($event)" />
-    }@else if (nextAd.type === 'video') {
-      <video [src]="nextAd.url" (error)="onError($event)"></video>
+    @if (nextAd) {
+      @if (nextAd.type === 'image') {
+        <img 
+        [src]="nextAd.local_url" 
+        [ngClass]="{'fill-screen': nextAd.fill_screen, 'contain-screen': !nextAd.fill_screen}" 
+        (error)="onError($event)" 
+        style="display: none;" />
+      } @else if (nextAd.type === 'video') {
+        <video 
+        [src]="nextAd.local_url" 
+        [ngClass]="{'fill-screen': nextAd.fill_screen, 'contain-screen': !nextAd.fill_screen}" 
+        preload="auto" 
+        (error)="onError($event)"
+         style="display: none;"></video>
+      }
     }
   </div>
-  }
-  <button (click)="nextAdHandler()">Siguiente Anuncio</button>
+   }
 </div>
-
-<!-- <img src="filenotfound.jpg" priority > -->

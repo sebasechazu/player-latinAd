@@ -1,11 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { Ad } from '../../models/ad.model';
-import { NgOptimizedImage } from '@angular/common';
+import { CommonModule, NgOptimizedImage } from '@angular/common';
 
 @Component({
   selector: 'app-player',
   templateUrl: './player.component.html',
-  imports: [NgOptimizedImage],
+  imports: [NgOptimizedImage,CommonModule],
   standalone: true,
   styleUrls: ['./player.component.css']
 })
@@ -14,51 +14,79 @@ export class PlayerComponent implements OnInit {
   ads: Ad[] = [];
   currentAd: Ad | null = null;
   nextAd: Ad | null = null;
+  adsReceived = false;
+  isLoading = true;
+  adDisplayDuration = 5000;
+
+  constructor(private cdr: ChangeDetectorRef) { }
 
   ngOnInit() {
     this.loadAds();
   }
 
   async loadAds() {
-    console.log('Solicitando anuncios...');
+    // Enviar mensaje a Electron para obtener anuncios
     window.electron.send('get-ads');
-  
-    window.electron.receive('send-ads', async (ads: Ad[]) => {
-      console.log('Anuncios recibidos:', ads);
-      if (ads.length > 0) {
-        this.ads = ads;
 
-        await this.delay(500); 
-  
-        this.currentAd = ads[0];
-        console.log('Primer anuncio:', this.currentAd);
-        this.nextAd = ads.length > 1 ? ads[1] : null;
-      } else {
-        console.warn('No se recibieron anuncios.');
-      }
-    });
-  }
-  
-  private delay(ms: number) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
-  
-  nextAdHandler() {
-    console.log('Next ad clicked');
-    console.log('Current Ad Before Change:', this.currentAd);
-    if (this.nextAd) {
-      this.currentAd = this.nextAd;
+    // Recibir anuncios una única vez
+    if (!this.adsReceived) {
+      this.adsReceived = true;
+      window.electron.receive('send-ads', async (ads: Ad[]) => {
+        console.log('Anuncios recibidos:', ads);
+        if (ads.length > 0) {
+          this.ads = ads.sort((a,b)=> a.position - b.position);
+          // Asignar el primer anuncio como el actual
+          this.currentAd = this.ads[0];
+          // Asignar el siguiente anuncio (si existe)
+          this.nextAd = this.ads.length > 1 ? this.ads[1] : null;
 
-      const nextIndex = this.ads.indexOf(this.currentAd) + 1;
-      console.log('Next Ad Index:', nextIndex);
-      this.nextAd = nextIndex < this.ads.length ? this.ads[nextIndex] : null;
-      console.log('New Current Ad:', this.currentAd);
-      console.log('New Next Ad:', this.nextAd);
+          this.isLoading = false;
+          this.cdr.detectChanges();
+
+          this.playCurrentAd();
+          
+        } else {
+          console.log('No se recibieron anuncios.');
+        }
+      });
     }
   }
 
+  playCurrentAd() {
+    if(this.currentAd) {
+      if(this.currentAd.type === 'image')
+      {
+        setTimeout(() => {
+          this.nextAdHandler();
+        }, this.adDisplayDuration)
+      }
+    }
+  }
+
+  nextAdHandler() {
+    console.log('Siguiente anuncio activado');
+    
+    const currentIndex = this.ads.indexOf(this.currentAd!);
+
+    // Si estamos al final de la lista, volver al primero
+    const nextIndex = currentIndex + 1 < this.ads.length ? currentIndex + 1 : 0;
+
+    // Cambiar el anuncio actual al siguiente
+    this.currentAd = this.ads[nextIndex];
+
+    // Establecer el siguiente anuncio
+    this.nextAd = this.ads[nextIndex + 1] || this.ads[0];
+
+    console.log('Nuevo anuncio actual:', this.currentAd?.local_url);
+    console.log('Nuevo siguiente anuncio:', this.nextAd?.local_url);
+
+    // Reproducir el siguiente anuncio (loop)
+    this.cdr.detectChanges();
+    this.playCurrentAd();
+  }
+
   onError(event: Event) {
-    console.error('Error al cargar la imagen:', event);
+    console.error('Error al cargar el recurso:', event);
+    this.nextAdHandler();
   }
 }
-

@@ -11,26 +11,24 @@
   align-items: center;
 }
 
-.fill-screen {
-  justify-content: center;
-}
-
-.ad img {
-  object-fit: contain;
-  width: auto;
-  height: auto;
-}
-
-.fill-screen img {
+.fill-screen img, .fill-screen video {
   object-fit: fill;
   width: 100%;
   height: 100%;
 }
 
-.ad video {
-  width: 100%;
+.contain-screen img, .contain-screen video {
+  object-fit: contain;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
 }
 
 .preload {
-  display: none; /* El div precargado estará oculto */
+  visibility: hidden;  
+  position: absolute;  
+  top: -9999px; 
+  left: -9999px;
 }
+

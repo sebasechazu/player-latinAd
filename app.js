@@ -71,8 +71,8 @@ async function downloadFile(item) {
 
 async function fetchAds() {
   try {
-    const response = await axios.get('https://w9awwdcbhe.api.quickmocker.com/media');
-    //const response = await axios.get('https://run.mocky.io/v3/62a4803f-a786-4e36-9e47-93db107f1c2c');
+    //const response = await axios.get('https://w9awwdcbhe.api.quickmocker.com/media');
+    const response = await axios.get('https://run.mocky.io/v3/62a4803f-a786-4e36-9e47-93db107f1c2c');
 
     const newAds = response.data;
 
@@ -139,7 +139,7 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: true,
       contextIsolation: false,
-      webSecurity: false
+      //webSecurity: false
     },
   });
 
