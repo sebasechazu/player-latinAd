@@ -3,7 +3,7 @@
   @if(currentAd){
   <div class="ad">
     @if(currentAd.type === 'image'){
-    <img [ngSrc]="currentAd.local_url" alt="Anuncio" (error)="onError($event)"/>
+      <img [src]="currentAd.local_url" alt="Anuncio" (error)="onError($event)"/>
     }@else if(currentAd.type === 'video'){
     <video [src]="currentAd.local_url" controls autoplay (ended)="nextAdHandler()">
     </video>
@@ -24,3 +24,5 @@
   }
   <button (click)="nextAdHandler()">Siguiente Anuncio</button>
 </div>
+
+<!-- <img src="filenotfound.jpg" priority > -->

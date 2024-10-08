@@ -93,12 +93,12 @@ async function fetchAds() {
           console.log(`Actualizando anuncio ${ad._id}, cambios detectados.`);
 
           const localFileName = await downloadFile(ad);
-          const filePath = path.join(__dirname, 'public', 'assets', localFileName);
+          const filePath = path.join(__dirname, 'dist', 'assets', localFileName);
 
           if (!fs.existsSync(filePath)) {           
-            ad.local_url = `file://${filePath.replace(/\\/g, '/')}`;
+            ad.local_url = `assets/${localFileName}`;
           } else {           
-            ad.local_url = `file://${filePath.replace(/\\/g, '/')}`;
+            ad.local_url = `assets/${localFileName}`;
           }
 
           await new Promise((resolve, reject) => {
@@ -144,6 +144,8 @@ function createWindow() {
   });
 
   win.loadFile(path.join('dist/browser/index.html'));
+
+  win.webContents.openDevTools();
 }
 
 app.whenReady().then(() => {
