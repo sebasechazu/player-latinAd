@@ -1,6 +1,6 @@
 export interface Ad {
   id: number;
-  type: 'image' | 'video';
+  type: 'image' | 'video' | 'url';
   url: string;
   length: number; 
   position: number;

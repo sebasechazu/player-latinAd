@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, HostListener, OnInit } from '@angular/core';
 import { Ad } from '../../models/ad.model';
 import { CommonModule, NgOptimizedImage } from '@angular/common';
 
@@ -17,6 +17,8 @@ export class PlayerComponent implements OnInit {
   adsReceived = false;
   isLoading = true;
   adDisplayDuration = 5000;
+  hideCursor = false;
+  cursorTimeout: any;
 
   constructor(private cdr: ChangeDetectorRef) { }
 
@@ -25,26 +27,18 @@ export class PlayerComponent implements OnInit {
   }
 
   async loadAds() {
-    // Enviar mensaje a Electron para obtener anuncios
-    window.electron.send('get-ads');
 
-    // Recibir anuncios una única vez
+    window.electron.send('get-ads');
     if (!this.adsReceived) {
       this.adsReceived = true;
       window.electron.receive('send-ads', async (ads: Ad[]) => {
-        console.log('Anuncios recibidos:', ads);
         if (ads.length > 0) {
           this.ads = ads.sort((a,b)=> a.position - b.position);
-          // Asignar el primer anuncio como el actual
           this.currentAd = this.ads[0];
-          // Asignar el siguiente anuncio (si existe)
           this.nextAd = this.ads.length > 1 ? this.ads[1] : null;
-
           this.isLoading = false;
           this.cdr.detectChanges();
-
           this.playCurrentAd();
-          
         } else {
           console.log('No se recibieron anuncios.');
         }
@@ -59,28 +53,41 @@ export class PlayerComponent implements OnInit {
         setTimeout(() => {
           this.nextAdHandler();
         }, this.adDisplayDuration)
+      } else if(this.currentAd.type === 'video'){
+        const videoElement = document.querySelector('video');
+        if (videoElement) {
+          videoElement.onended = () => this.nextAdHandler();
+        }
+      }else if(this.currentAd.type === 'url'){
+        this.checkInternetConnection().then((IsOnline)=> {
+          if(IsOnline) {
+            setTimeout(() => {
+              this.nextAdHandler();
+            }, this.adDisplayDuration)
+          }else{
+            this.nextAdHandler();
+          }
+        })
+       
       }
     }
   }
 
-  nextAdHandler() {
-    console.log('Siguiente anuncio activado');
-    
+  checkInternetConnection(): Promise<boolean> {
+    return new Promise((resolve) => {
+      if (navigator.onLine) {
+        resolve(true);  
+      } else {
+        resolve(false); 
+      }
+    });
+  }
+  
+  nextAdHandler() { 
     const currentIndex = this.ads.indexOf(this.currentAd!);
-
-    // Si estamos al final de la lista, volver al primero
     const nextIndex = currentIndex + 1 < this.ads.length ? currentIndex + 1 : 0;
-
-    // Cambiar el anuncio actual al siguiente
     this.currentAd = this.ads[nextIndex];
-
-    // Establecer el siguiente anuncio
     this.nextAd = this.ads[nextIndex + 1] || this.ads[0];
-
-    console.log('Nuevo anuncio actual:', this.currentAd?.local_url);
-    console.log('Nuevo siguiente anuncio:', this.nextAd?.local_url);
-
-    // Reproducir el siguiente anuncio (loop)
     this.cdr.detectChanges();
     this.playCurrentAd();
   }
@@ -89,4 +96,27 @@ export class PlayerComponent implements OnInit {
     console.error('Error al cargar el recurso:', event);
     this.nextAdHandler();
   }
+
+  toggleFullscreen(){
+    window.electron.send('toggle-fullscreen');
+  }
+  closeApp(){
+    window.electron.send('close-app');
+  }
+
+  @HostListener('mousemove')
+  onMouseMove() {
+    this.hideCursor = false;
+    this.resetCursorTimer();
+  }
+
+  resetCursorTimer() {
+    if (this.cursorTimeout) {
+      clearTimeout(this.cursorTimeout);
+    }
+    this.cursorTimeout = setTimeout(() => {
+      this.hideCursor = true;
+    }, 3000); 
+  }
+
 }

@@ -1,13 +1,11 @@
 <div class="player-container">
   
-   <!-- Mostrar mensaje de cargando mientras esperamos los anuncios -->
    @if (isLoading) {
     <p >Cargando anuncios...</p>
    } 
-  
+
    @if (!isLoading) {
     
-    <!-- Mostrar currentAd si está disponible -->
   @if (currentAd) {
     <div class="ad">
       @if (currentAd.type === 'image') {
@@ -24,10 +22,15 @@
         controls autoplay
         (ended)="nextAdHandler()"></video> 
       }
+      @else if ( currentAd.type === 'url') {
+        <iframe
+        [src]="currentAd.local_url"
+        frameborder="0"
+        ></iframe>
+      }
     </div>
   }
 
-  <!-- Pre-cargar nextAd pero sin mostrarlo al usuario -->
   <div class="ad preload">
     @if (nextAd) {
       @if (nextAd.type === 'image') {
@@ -44,7 +47,18 @@
         (error)="onError($event)"
          style="display: none;"></video>
       }
+      @else if ( nextAd.type === 'url') {
+        <iframe
+        [src]="nextAd.local_url"
+        frameborder="0"
+        ></iframe>
+      }
     }
   </div>
    }
+   <div class="button-overlay">
+    <button (click)="toggleFullscreen()">🔲</button>
+    <button (click)="nextAdHandler()">➡️</button>
+    <button (click)="closeApp()">❌</button>
+  </div>
 </div>

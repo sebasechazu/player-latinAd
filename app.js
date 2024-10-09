@@ -71,8 +71,8 @@ async function downloadFile(item) {
 
 async function fetchAds() {
   try {
-    //const response = await axios.get('https://w9awwdcbhe.api.quickmocker.com/media');
-    const response = await axios.get('https://run.mocky.io/v3/62a4803f-a786-4e36-9e47-93db107f1c2c');
+    const response = await axios.get('https://w9awwdcbhe.api.quickmocker.com/media');
+    //const response = await axios.get('https://run.mocky.io/v3/62a4803f-a786-4e36-9e47-93db107f1c2c');
 
     const newAds = response.data;
 
@@ -92,13 +92,18 @@ async function fetchAds() {
         if (!existingAd || ad.updated_at !== existingAd.updated_at) {
           console.log(`Actualizando anuncio ${ad._id}, cambios detectados.`);
 
-          const localFileName = await downloadFile(ad);
-          const filePath = path.join(__dirname, 'dist', 'assets', localFileName);
+          if(ad.type === 'url'){
+            ad.local_url = ad.url ;
+            console.log('actualizando solo la URL del anuncio ${ad._id}.');
+          }else{
+            const localFileName = await downloadFile(ad);
+            const filePath = path.join(__dirname, 'dist', 'assets', localFileName);
 
-          if (!fs.existsSync(filePath)) {           
-            ad.local_url = `assets/${localFileName}`;
-          } else {           
-            ad.local_url = `assets/${localFileName}`;
+            if (!fs.existsSync(filePath)) {           
+              ad.local_url = `assets/${localFileName}`;
+            } else {           
+              ad.local_url = `assets/${localFileName}`;
+            }
           }
 
           await new Promise((resolve, reject) => {
@@ -132,20 +137,41 @@ ipcMain.on('get-ads', (event) => {
 });
 
 function createWindow() {
-  const win = new BrowserWindow({
-    width: 800,
-    height: 600,
+
+  const windowWidth = 800;  
+  const windowHeight = 600; 
+  const windowX = 100;      
+  const windowY = 100;      
+
+  win = new BrowserWindow({
+    
+    width: windowWidth,
+    height: windowHeight,
+    x: windowX,  
+    y: windowY,  
+    frame: false, 
+    fullscreenable : true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: true,
       contextIsolation: false,
-      //webSecurity: false
     },
   });
 
   win.loadFile(path.join('dist/browser/index.html'));
 
-  win.webContents.openDevTools();
+  ipcMain.on('toggle-fullscreen', () => {
+    if (win.isFullScreen()) {
+      win.setFullScreen(false);
+    } else {
+      win.setFullScreen(true);
+    }
+  });
+
+  ipcMain.on('close-app', () => {
+    win.close();
+  });
+
 }
 
 app.whenReady().then(() => {
