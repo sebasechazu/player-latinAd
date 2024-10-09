@@ -1,6 +1,7 @@
 import { ChangeDetectorRef, Component, HostListener, OnInit } from '@angular/core';
 import { Ad } from '../../models/ad.model';
 import { CommonModule, NgOptimizedImage } from '@angular/common';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-player',
@@ -20,7 +21,7 @@ export class PlayerComponent implements OnInit {
   hideCursor = false;
   cursorTimeout: any;
 
-  constructor(private cdr: ChangeDetectorRef) { }
+  constructor(private cdr: ChangeDetectorRef ,private sanitizer: DomSanitizer) { }
 
   ngOnInit() {
     this.loadAds();
@@ -47,30 +48,32 @@ export class PlayerComponent implements OnInit {
   }
 
   playCurrentAd() {
-    if(this.currentAd) {
-      if(this.currentAd.type === 'image')
-      {
-        setTimeout(() => {
-          this.nextAdHandler();
-        }, this.adDisplayDuration)
-      } else if(this.currentAd.type === 'video'){
+    if (this.currentAd) {
+      if (this.currentAd.type === 'image' || this.currentAd.type === 'url') {
+        
+        this.checkInternetConnection().then((isOnline) => {
+          if (isOnline || this.currentAd?.type === 'image') {
+            setTimeout(() => {
+              this.nextAdHandler();
+            }, this.adDisplayDuration);
+          } else {
+            this.nextAdHandler();
+          }
+        }).catch(() => {
+          this.onError(new ErrorEvent('Error de conexión'));
+        });
+      } else if (this.currentAd.type === 'video') {
+        
         const videoElement = document.querySelector('video');
         if (videoElement) {
           videoElement.onended = () => this.nextAdHandler();
         }
-      }else if(this.currentAd.type === 'url'){
-        this.checkInternetConnection().then((IsOnline)=> {
-          if(IsOnline) {
-            setTimeout(() => {
-              this.nextAdHandler();
-            }, this.adDisplayDuration)
-          }else{
-            this.nextAdHandler();
-          }
-        })
-       
       }
     }
+  }
+  
+  getSafeUrl(url: string): SafeResourceUrl {
+    return this.sanitizer.bypassSecurityTrustResourceUrl(url);
   }
 
   checkInternetConnection(): Promise<boolean> {

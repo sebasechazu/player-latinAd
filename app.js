@@ -72,8 +72,7 @@ async function downloadFile(item) {
 async function fetchAds() {
   try {
     const response = await axios.get('https://w9awwdcbhe.api.quickmocker.com/media');
-    //const response = await axios.get('https://run.mocky.io/v3/62a4803f-a786-4e36-9e47-93db107f1c2c');
-
+    
     const newAds = response.data;
 
     console.log(`Anuncios obtenidos: ${JSON.stringify(newAds)}`); 
@@ -89,7 +88,7 @@ async function fetchAds() {
           });
         });
 
-        if (!existingAd || ad.updated_at !== existingAd.updated_at) {
+        if (!existingAd || ad.updated_at !== existingAd.updated_at || ad.length !== existingAd.length) {
           console.log(`Actualizando anuncio ${ad._id}, cambios detectados.`);
 
           if(ad.type === 'url'){
@@ -171,6 +170,8 @@ function createWindow() {
   ipcMain.on('close-app', () => {
     win.close();
   });
+
+  //win.webContents.openDevTools();
 
 }
 

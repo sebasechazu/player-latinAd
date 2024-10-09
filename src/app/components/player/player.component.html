@@ -1,64 +1,69 @@
 <div class="player-container">
   
-   @if (isLoading) {
-    <p >Cargando anuncios...</p>
-   } 
+  @if (isLoading) {
+   <p>Cargando anuncios...</p>
+  } 
 
-   @if (!isLoading) {
-    
-  @if (currentAd) {
-    <div class="ad">
-      @if (currentAd.type === 'image') {
-        <img 
-        [src]="currentAd.local_url" 
-        alt="Anuncio" 
-        [ngClass]="{'fill-screen': currentAd.fill_screen, 'contain-screen': !currentAd.fill_screen}" 
-        (error)="onError($event)" /> 
-      } @else if (currentAd.type === 'video') {
-        <video 
-        [src]="currentAd.local_url"
-        [ngClass]="{'fill-screen': currentAd.fill_screen, 'contain-screen': !currentAd.fill_screen}" 
-        preload="auto" 
-        controls autoplay
-        (ended)="nextAdHandler()"></video> 
-      }
-      @else if ( currentAd.type === 'url') {
-        <iframe
-        [src]="currentAd.local_url"
-        frameborder="0"
-        ></iframe>
-      }
-    </div>
+  @if (!isLoading) {
+   
+     @if (currentAd) {
+       <div class="ad">
+         @if (currentAd.type === 'image') {
+           <img 
+             [src]="currentAd.local_url" 
+             alt="Anuncio" 
+             [ngClass]="{'fill-screen': currentAd.fill_screen, 'contain-screen': !currentAd.fill_screen}" 
+             (error)="onError($event)" /> 
+         } @else if (currentAd.type === 'video') {
+           <video 
+             [src]="currentAd.local_url"
+             [ngClass]="{'fill-screen': currentAd.fill_screen, 'contain-screen': !currentAd.fill_screen}" 
+             preload="auto" 
+             (error)="onError($event)"
+             controls autoplay
+             (ended)="nextAdHandler()"></video> 
+         } @else if (currentAd.type === 'url') {
+           <div class="iframe-container">
+             <iframe
+               [src]="getSafeUrl(currentAd.local_url)"
+               frameborder="0"
+               (error)="onError($event)"
+             ></iframe>
+           </div>
+         }
+       </div>
+     }
+
+     <div class="ad preload">
+       @if (nextAd) {
+         @if (nextAd.type === 'image') {
+           <img 
+             [src]="nextAd.local_url" 
+             [ngClass]="{'fill-screen': nextAd.fill_screen, 'contain-screen': !nextAd.fill_screen}" 
+             (error)="onError($event)" 
+             style="display: none;" />
+         } @else if (nextAd.type === 'video') {
+           <video 
+             [src]="nextAd.local_url" 
+             [ngClass]="{'fill-screen': nextAd.fill_screen, 'contain-screen': !nextAd.fill_screen}" 
+             preload="auto" 
+             (error)="onError($event)"
+             style="display: none;"></video>
+         } @else if (nextAd.type === 'url') {
+           <div class="iframe-container">
+             <iframe
+               [src]="getSafeUrl(nextAd.local_url)"
+               frameborder="0"
+               (error)="onError($event)"
+             ></iframe>
+           </div>
+         }
+       }
+     </div>
   }
-
-  <div class="ad preload">
-    @if (nextAd) {
-      @if (nextAd.type === 'image') {
-        <img 
-        [src]="nextAd.local_url" 
-        [ngClass]="{'fill-screen': nextAd.fill_screen, 'contain-screen': !nextAd.fill_screen}" 
-        (error)="onError($event)" 
-        style="display: none;" />
-      } @else if (nextAd.type === 'video') {
-        <video 
-        [src]="nextAd.local_url" 
-        [ngClass]="{'fill-screen': nextAd.fill_screen, 'contain-screen': !nextAd.fill_screen}" 
-        preload="auto" 
-        (error)="onError($event)"
-         style="display: none;"></video>
-      }
-      @else if ( nextAd.type === 'url') {
-        <iframe
-        [src]="nextAd.local_url"
-        frameborder="0"
-        ></iframe>
-      }
-    }
-  </div>
-   }
-   <div class="button-overlay">
-    <button (click)="toggleFullscreen()">🔲</button>
-    <button (click)="nextAdHandler()">➡️</button>
-    <button (click)="closeApp()">❌</button>
+  <div class="button-overlay">
+     <button (click)="toggleFullscreen()">🔲</button>
+     <button (click)="nextAdHandler()">➡️</button>
+     <button (click)="closeApp()">❌</button>
   </div>
 </div>
